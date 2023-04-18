@@ -11,14 +11,15 @@ authRouter.patch(
   authenticateToken,
   AuthControllers.changePassword
 );
-// authRouter.patch(
-//   "/change-password-in-forgot",
-//   authenticateToken,
-//   accountControllers.changePasswordInForgot
-// );
-// authRouter.post("/forgot-password", accountControllers.forgotPassword);
-// authRouter.get("/change-password-form", accountControllers.changePasswordForm);
-// authRouter.post("/refresh-token", accountControllers.refeshToken);
-// authRouter.post("/token", accountControllers.token);
+authRouter.patch(
+  "/change-password-in-forgot",
+  authenticateToken,
+  AuthControllers.changePasswordInForgot
+);
+authRouter.post("/forgot-password", AuthControllers.forgotPassword);
+authRouter.get("/change-password-form", AuthControllers.changePasswordForm);
+authRouter.post("/refresh-token", AuthControllers.refeshToken);
+authRouter.post("/token", AuthControllers.token);
+authRouter.put("/:id/update", authenticateToken, AuthControllers.updateUser);
 
 export default authRouter;

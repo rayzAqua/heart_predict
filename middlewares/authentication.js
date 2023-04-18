@@ -6,7 +6,11 @@ async function authenticateToken(req, res, next) {
 
   // If token is null, return 401 Unauthorized
   if (!token) {
-    return res.send(message("", false, "Không có quyền truy cập"));
+    return res.status(400).json({
+      status: false,
+      message: "Không có quyền truy cập",
+      data: {},
+    });
   }
   try {
     // Verify token using secret key
