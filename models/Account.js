@@ -14,7 +14,7 @@ const AccountSchema = new mongoose.Schema(
       unique: true,
     },
     userInfo: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },
