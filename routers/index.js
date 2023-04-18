@@ -1,5 +1,8 @@
+import authRouter from "./auth.routes.js";
+
 function hieu56(app) {
   //viet route trong nay
+  app.use("/account", authRouter);
 }
 function hieu57(app) {
   //viet route trong nay
