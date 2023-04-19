@@ -19,6 +19,7 @@ app.use(
     origin: "*",
   })
 );
+
 route(app);
 
 const connect = async () => {

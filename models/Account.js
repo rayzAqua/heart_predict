@@ -11,7 +11,6 @@ const AccountSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      unique: true,
     },
     userInfo: {
       type: mongoose.Schema.Types.ObjectId,
