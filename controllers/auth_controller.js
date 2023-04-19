@@ -17,6 +17,7 @@ class AuthControllers {
   async signUp(req, res, next) {
     try {
       const {
+        username,
         name,
         imageUrl,
         gender,
@@ -39,7 +40,7 @@ class AuthControllers {
       });
 
       const user = await Account.create({
-        email: req.body.username,
+        email: username,
         password: encode(req.body.password),
         userInfo: userInfo,
       });
@@ -50,9 +51,10 @@ class AuthControllers {
         data: { user },
       });
     } catch (error) {
-      return res.status(400).json({
+      console.log(error);
+      return res.status(200).json({
         status: false,
-        message: "Tạo tài khoản thất bại!",
+        message: error.message,
         data: { error },
       });
     }
@@ -70,7 +72,6 @@ class AuthControllers {
         //check if password matches
         const result = compare(req.body.password, user.password);
         if (result) {
-          const userInfo = await User.findOne({ _id: user.userInfo });
           const token = getToken(req.body.username, false, "customer");
           const refreshToken = getRefeshToken(req.body.username, "customer");
           res.setHeader("Authorization", token);
@@ -81,16 +82,17 @@ class AuthControllers {
             data: {
               user: user,
               refreshToken: refreshToken,
-              userInfo: userInfo,
             },
           });
         } else {
-          return res
-            .status(400)
-            .json({ status: false, message: "Mật khẩu không đúng!", data: {} });
+          return res.status(200).json({
+            status: false,
+            message: "Mật khẩu không đúng!",
+            data: {},
+          });
         }
       } else {
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           message: "Tài khoản không tồn tại!",
           data: {},
@@ -98,7 +100,7 @@ class AuthControllers {
       }
     } catch (error) {
       return res
-        .status(400)
+        .status(200)
         .json({ status: false, message: "Lỗi!", data: { error } });
     }
   }
@@ -107,7 +109,7 @@ class AuthControllers {
   async changePassword(req, res) {
     const { username, newPassword, oldPassword } = req.body;
     if (!newPassword || !oldPassword) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: "Mật khẩu mới và mật khẩu cũ không được để trống",
         data: {},
@@ -134,7 +136,7 @@ class AuthControllers {
             data: {},
           });
         } else {
-          return res.status(400).json({
+          return res.status(200).json({
             status: false,
             message: "Mật khẩu cũ không đúng!",
             data: { error },
@@ -142,7 +144,7 @@ class AuthControllers {
         }
       }
     } catch (error) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: "Đổi mật khẩu thất bại!",
         data: { error },
@@ -172,7 +174,7 @@ class AuthControllers {
         data: {},
       });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: "Đổi mật khẩu thất bại!",
         data: { error },
@@ -188,7 +190,7 @@ class AuthControllers {
       const user = await Account.findOne({ email: username });
 
       if (!user) {
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           message: "Email không đúng!",
           data: {},
@@ -197,14 +199,14 @@ class AuthControllers {
       const token = getToken(username, true);
       const rs = await sendChangePassMail(username, token);
       if (rs.response.includes("OK")) {
-        return res.status(400).json({
+        return res.status(200).json({
           status: true,
           message: "Đã gửi mail đổi mật khẩu tới: " + username,
           data: {},
         });
       }
     } catch (error) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: "Khôi phục mật khẩu thất bại!",
         data: { error },
@@ -225,7 +227,7 @@ class AuthControllers {
 
     jsonwebtoken.verify(refreshToken, process.env.JWT_SECRET, (err, user) => {
       if (err)
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           message: "Refesh token không hợp lệ!",
           data: { err },
@@ -244,7 +246,7 @@ class AuthControllers {
   async token(req, res) {
     const email = req.body.email;
     if (email === undefined || email == "")
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: "Lấy token thất bại!",
         data: {},
@@ -275,7 +277,7 @@ class AuthControllers {
 
       const user = await User.findById(id);
       if (!user) {
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           message: "Không tìm thấy tài khoản có id:" + idStaff,
           data: {},
@@ -305,7 +307,7 @@ class AuthControllers {
         data: {},
       });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: "Cập  nhật thông tin thất bại!",
         data: { error },
