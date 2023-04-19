@@ -73,4 +73,4 @@ const DataSchema = new mongoose.Schema(
         // }
     });
 
-export default mongoose.Model("Data", DataSchema);
+export default mongoose.model("Data", DataSchema);
