@@ -1,35 +1,61 @@
 import mongoose from "mongoose";
 
 const DataSchema = new mongoose.Schema(
-    {
-        // Lấy age, sex và BMI
-        userInfo: {
-            type: String,
+    {        
+        bpm:{
+            type: Number,
             required: true,
-            ref: "User",
         },
-        // Một mảng các nhịp tim - Khi được truy vấn tới sẽ lấy toàn bộ cả mảng này để tình trung bình nhịp tim theo ngày
-        heart: [{
-            heartRate: {
-                type: Number,
-                required: true,
-            },
-            date: {
-                type: Date,
-                required: true
-            }
-        }],
-        // Một mảng các nộng độ O2 - Khi được truy vấn tới sẽ lấy toàn bộ cả mảng này để tình trung bình nồng độ O2 theo ngày
-        spO2: [{
-            oxygen: {
-                type: Number,
-                required: true,
-            },
-            date: {
-                type: Date,
-                required: true
-            }
-        }],
+        spO2:{
+            type: Number,
+            required: true,
+        },
+        temp:{
+            type: Number,
+            required: true,
+        },
+        addDate:{
+            type : Date,
+            required: true,
+        },
+        userInfo:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
+    },
+    { timestamps: true }
+    );
+
+export default mongoose.model("Data", DataSchema);
+
+// Lấy age, sex và BMI
+        // userInfo: {
+        //     type: String,
+        //     required: true,
+        //     ref: "User",
+        // },
+        // // Một mảng các nhịp tim - Khi được truy vấn tới sẽ lấy toàn bộ cả mảng này để tình trung bình nhịp tim theo ngày
+        // heart: [{
+        //     heartRate: {
+        //         type: Number,
+        //         required: true,
+        //     },
+        //     date: {
+        //         type: Date,
+        //         required: true
+        //     }
+        // }],
+        // // Một mảng các nộng độ O2 - Khi được truy vấn tới sẽ lấy toàn bộ cả mảng này để tình trung bình nồng độ O2 theo ngày
+        // spO2: [{
+        //     oxygen: {
+        //         type: Number,
+        //         required: true,
+        //     },
+        //     date: {
+        //         type: Date,
+        //         required: true
+        //     }
+        // }],
         
         // // Loại đau ngực: Loại đau ngực có 4 loại tương ứng với 0 1 2 3
         // cp: {
@@ -71,6 +97,3 @@ const DataSchema = new mongoose.Schema(
         // oldpeak: {
         //     type: Number,
         // }
-    });
-
-export default mongoose.Model("Data", DataSchema);

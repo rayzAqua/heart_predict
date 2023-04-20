@@ -1,4 +1,5 @@
 import authRouter from "./auth.routes.js";
+import dataRouter from "./data.routes.js";
 
 function hieu56(app) {
   //viet route trong nay
@@ -9,6 +10,7 @@ function hieu57(app) {
 }
 function hoa(app) {
   //viet route trong nay
+  app.use("/data", dataRouter);
 }
 
 function route(app) {

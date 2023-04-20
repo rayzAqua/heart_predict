@@ -27,7 +27,7 @@ class AuthControllers {
         height,
         weight,
       } = req.body;
-      if (imageUrl == undefined) imageUrl = "";
+      if (imageUrl == undefined) imageUrl ="";
       const userInfo = await User.create({
         name,
         imageUrl,
