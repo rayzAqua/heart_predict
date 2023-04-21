@@ -13,6 +13,7 @@ async function authenticateToken(req, res, next) {
     });
   }
   try {
+    
     // Verify token using secret key
     const decoded = jsonwebtoken.verify(token, process.env.JWT_SECRET);
     const user = await Account.findOne({ email: decoded.email });
@@ -23,6 +24,7 @@ async function authenticateToken(req, res, next) {
         data: {},
       });
     }
+    req.user=JSON.stringify(user)
     next();
   } catch (error) {
     if (error.message == "jwt expired") {
