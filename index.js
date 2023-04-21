@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import path from "path";
 import cors from "cors";
 import route from "./routers/index.js";
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const app = express();
 dotenv.config();
 
@@ -12,7 +13,7 @@ import bodyParser from "body-parser";
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// app.use(express.static(path.join(__dirname, "/public")));
+app.use(express.static(path.join(__dirname, "/public")));
 app.use(
   cors({
     origin: "*",

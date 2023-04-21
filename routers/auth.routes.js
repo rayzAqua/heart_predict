@@ -17,7 +17,11 @@ authRouter.patch(
   AuthControllers.changePasswordInForgot
 );
 authRouter.post("/forgot-password", AuthControllers.forgotPassword);
-authRouter.get("/change-password-form", AuthControllers.changePasswordForm);
+authRouter.get(
+  "/change-password-form",
+  authenticateToken,
+  AuthControllers.changePasswordForm
+);
 authRouter.post("/refresh-token", AuthControllers.refeshToken);
 authRouter.post("/token", AuthControllers.token);
 authRouter.put("/:id/update", authenticateToken, AuthControllers.updateUser);

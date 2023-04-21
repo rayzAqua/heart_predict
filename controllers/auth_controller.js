@@ -6,7 +6,10 @@ import sendChangePassMail from "../utils/mail.js";
 import { compare, encode } from "../utils/my-bcrypt.js";
 import { getRefeshToken, getToken } from "../utils/token.js";
 import jsonwebtoken from "jsonwebtoken";
+import { fileURLToPath } from "url";
 import path from "path";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // passport.use(new LocalStrategy(Account.authenticate()));
 // passport.serializeUser(Account.serializeUser());
@@ -216,6 +219,8 @@ class AuthControllers {
 
   //[GET] /acccount/change-password-form"
   async changePasswordForm(req, res) {
+    // const __dirname = path.dirname(new URL(import.meta.url).pathname);
+
     res.sendFile(path.join(__dirname, "../public/change-password-form.html"));
   }
 
