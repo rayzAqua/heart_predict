@@ -16,7 +16,7 @@ const DataSchema = new mongoose.Schema(
             },
             date: {
                 type: Date,
-                required: true
+                default: Date.now,
             }
         }],
         // Một mảng các nộng độ O2 - Khi được truy vấn tới sẽ lấy toàn bộ cả mảng này để tình trung bình nồng độ O2 theo ngày
@@ -27,7 +27,7 @@ const DataSchema = new mongoose.Schema(
             },
             date: {
                 type: Date,
-                required: true
+                default: Date.now,
             }
         }],
     });
