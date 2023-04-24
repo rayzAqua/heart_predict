@@ -1,4 +1,5 @@
 import authRouter from "./auth.routes.js";
+import dataRouter from "./data.routes.js";
 import historyRouter from "./history.routes.js";
 
 function hieu56(app) {
@@ -10,6 +11,7 @@ function hieu57(app) {
 }
 function hoa(app) {
   //viet route trong nay
+  app.use("/data", dataRouter);
 }
 function manh(app){
   app.use("/history",historyRouter)

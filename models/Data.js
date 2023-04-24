@@ -4,7 +4,7 @@ const DataSchema = new mongoose.Schema(
     {
         // Lấy age, sex và BMI
         userInfo: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
             required: true,
             ref: "User",
         },
