@@ -157,7 +157,7 @@ class AuthControllers {
 
   //[PATCH] /acccount/change-password-in-forgot
   async changePasswordInForgot(req, res) {
-    const { email: username, newPassword } = req.body;
+    const { email, newPassword } = req.body;
     //check valid old password
     if (!newPassword) {
       return res.send(message("", false, "Mật khẩu mới không được để trống!"));
@@ -165,8 +165,8 @@ class AuthControllers {
 
     try {
       const encodedPassword = encode(newPassword);
-      await Account.updateOne(
-        { email: username },
+      var account = await Account.updateOne(
+        { email: email },
         { $set: { password: encodedPassword } },
         { new: true }
       );
