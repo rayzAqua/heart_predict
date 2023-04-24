@@ -1,4 +1,5 @@
 import authRouter from "./auth.routes.js";
+import dataRouter from "./data.routes.js";
 import historyRouter from "./history.routes.js";
 import predictRouter from "./predicts.js"
 import dataRouter from "./datas.js";
@@ -14,6 +15,7 @@ const hieu57 = (app) => {
 }
 function hoa(app) {
   //viet route trong nay
+  app.use("/data", dataRouter);
 }
 function manh(app){
   app.use("/history", historyRouter)
