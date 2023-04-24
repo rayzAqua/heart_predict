@@ -3,7 +3,7 @@ import Data from "../models/Data.js";
 export const createData = async (req, res, next) => {
 
     // Tạo mới một đối tượng data với các thông tin từ req.body
-    const newData = new Data(req. body);
+    const newData = new Data(req.body);
 
     try {
         // Lưu đối tượng data đó vào mongoDB
