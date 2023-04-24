@@ -2,7 +2,6 @@ import authRouter from "./auth.routes.js";
 import dataRouter from "./data.routes.js";
 import historyRouter from "./history.routes.js";
 import predictRouter from "./predicts.js"
-import dataRouter from "./datas.js";
 
 function hieu56(app) {
   //viet route trong nay
@@ -11,7 +10,6 @@ function hieu56(app) {
 const hieu57 = (app) => {
   //viet route trong nay
   app.use("/api/predict", predictRouter)
-  app.use("/api/data", dataRouter)
 }
 function hoa(app) {
   //viet route trong nay

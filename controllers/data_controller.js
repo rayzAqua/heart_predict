@@ -1,4 +1,4 @@
-import Data from "../models/Data";
+import Data from "../models/Data.js";
 
 class DataControllers{
     async createData(req, res, next){

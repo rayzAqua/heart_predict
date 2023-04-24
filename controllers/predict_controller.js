@@ -1,6 +1,7 @@
 import Data from "../models/Data.js"
 import History from "../models/History.js";
 import { randomPredictData } from "../utils/randomPredictData.js";
+import docterBot from "../docterbot/docterBot.js";
 
 export const predict = async (req, res, next) => {
 
@@ -56,7 +57,7 @@ export const predict = async (req, res, next) => {
         //B3: Quy đổi:
         // Mức trtbps bình thường là từ 90 đến 119 mmHg.
         // Mức trtbps bất thường là từ 120 đến 200 mmHg.
-        const trtbps = averSpO2 ? ((averSpO2 >= 93 && averSpO2 <= 100) ? randomPredictData(90, 119) : randomPredictData(120, 200)) : null;
+        const trtbps = averSpO2 ? ((averSpO2 >= 93 && averSpO2 <= 100) ? randomPredictData(90, 119) : randomPredictData(120, 200)) : 0;
 
         // Xử lý cholesterol - suy ra từ chiều cao và cân nặng - chỉ số BMI có liên quan đến cholesterol
         // Dưới 18.5: Gầy
@@ -89,11 +90,11 @@ export const predict = async (req, res, next) => {
                 return hr.heartRate;
             }
         });
-        console.log(HR)
+        console.log(HR);
         // B2: Tính trung bình cộng
         const averHR = Math.ceil((HR.reduce((sum, curr) => sum + curr, 0) / HR.length));
         // B3: Quy đổi
-        const thalachh = averHR;
+        const thalachh = averHR ? averHR : 0;
 
         // B1.3: Lưu lại dữ liệu
         const data = {
@@ -109,19 +110,29 @@ export const predict = async (req, res, next) => {
             oldpeak: req.body.oldpeak || -1,
         }
 
-        // B2: Gửi dữ liệu đến cho AI
-        // Chuyển đổi model AI từ py sang onnx
-        // Gọi đến model onnx trong server nodejs
-        // Chuyển đổi mẫu json trên thành csv
-        // Gửi tệp csv này đến cho model onnx để dự đoán
+        // B2: Gửi dữ liệu đến cho model AI để dự đoán và nhận phản hổi
+        const result = await docterBot(data, next);
+        console.log(parseInt(result));
 
-        // B3: Nhận phản hồi
+        // B3: Lưu vào History
 
-        // B4: Lưu vào History
+        req.history = { heartBeat: averHR, oxygen: averSpO2, isNotHealthy: parseInt(result) }
+
+        const newHistory = new History(req.history);
+        try {
+            await newHistory.save();
+        } catch (err) {
+            next(err);
+        }
 
         // B5: Gửi kết quả đến cho client
-        
-        res.status(200).json(data);
+        const message = parseInt(result) === 0 ? "Tim ban dang khoe manh" : parseInt(result) === 1 ? "Ban co nguy co mac benh tim" : "ERROR";
+        res.status(200).json(
+            {
+                dataPredict: data,
+                heartHealthy: message
+            }
+        );
 
     } catch (err) {
         next(err)

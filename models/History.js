@@ -13,7 +13,7 @@ const HistorySchema = new mongoose.Schema(
             required: true,
         },
         // Chuẩn đoán
-        isHealthy: {
+        isNotHealthy: {
             type: Boolean,
         },
     },

@@ -16,8 +16,6 @@ const router = express.Router();
 // B5: Gửi kết quả phản hồi từ server2 đến cho client
 router.post("/data/:dataid", predict)
 
-router.get("/:id")
-
 export default router;
 
 
