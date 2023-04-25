@@ -1,8 +1,8 @@
-import Data from "../models/Data.js"
 import User from "../models/User.js"
+import Data from "../models/Data.js"
 import History from "../models/History.js";
-import { randomPredictData } from "../utils/randomPredictData.js";
 import docterBot from "../docterbot/docterBot.js";
+import { randomPredictData } from "../utils/randomPredictData.js";
 import { createError } from "../utils/createError.js";
 
 export const predict = async (req, res, next) => {
@@ -194,6 +194,4 @@ export const predict = async (req, res, next) => {
     } catch (err) {
         next(err)
     }
-
-
 }
