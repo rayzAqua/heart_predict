@@ -132,7 +132,7 @@ export const predict = async (req, res, next) => {
         });
         console.log(hrValues);
         // Tính trung bình cộng các giá trị số đo nhịp tim từ mảng số đo nhịp tim.
-        const averHR = Math.ceil((hrValues.reduce((sum, curr) => sum + curr, 0) / hrValues.length));
+        const averHR = Math.round((hrValues.reduce((sum, curr) => sum + curr, 0) / hrValues.length));
         // Quy đổi.
         const thalachh = averHR ? averHR : 0;
 
