@@ -1,102 +1,142 @@
 import Data from "../models/Data.js"
+import User from "../models/User.js"
 import History from "../models/History.js";
 import { randomPredictData } from "../utils/randomPredictData.js";
 import docterBot from "../docterbot/docterBot.js";
+import { createError } from "../utils/createError.js";
 
 export const predict = async (req, res, next) => {
 
-    const dataId = req.params.dataid;
+    const userId = req.params.userid;
 
     try {
-        // B1: Xử lý dữ liệu từ client
-        // B1.1: Lấy data của user dựa trên id data
-        const userData = await Data.findById(dataId).populate({
-            path: "userInfo",
-            select: ["gender", "birthDay", "height", "weight"]
-        });
+        // B1: Xử lý dữ liệu từ client.
+        // B1.1: Truy vấn thông tin của user dựa trên id user.
+        const userStat = await User.findById(userId);
+        // B1.2: Truy vấn data cảm biến dựa trên id user.
+        const userData = await Data.find({ userInfo: userId });
 
-        //B1.2: Trích xuất từng dữ liệu một để tiến hành xử lý
-        // Trích xuất dữ liệu của thuộc tích userInfo
-        const { gender, birthDay, height, weight, ...otherDetails1 } = userData.userInfo._doc;
-        // Trích xuất dữ liệu của userData
-        const { heart, spO2, ...otherDetails2 } = userData._doc;
+        // B1.3: Trích xuất dữ liệu và tiến hành xử lý dữ liệu
+        // Trích xuất dữ liệu chỉ số từ userStat
+        const { gender, birthDay, height, weight, ...otherDetails } = userStat._doc;
+        // Tạo ra một mảng chứa các đối tượng date từ thuộc tính date của userData.
+        const date = userData.map(({ date }) => date);
+        // Từ mảng date, kết hợp từng phần tử của nó lần lượt với các thuộc tính heartRate, SpO2, temp để tạo ra các mảng
+        // đối tượng heartRate, SpO2, temp.
+        const [heartRates, SpO2s, temp] = await Promise.all([
+            userData.map((data, index) => ({ bmp: data.heartRate, date: date[index] })),
+            userData.map((data, index) => ({ oxygen: data.SpO2, date: date[index] })),
+            userData.map((data, index) => ({ temperature: data.temp, date: date[index] })),
+        ]);
+        console.log("HeartRate: ", heartRates);
+        console.log("SpO2: ", SpO2s);
 
-        //B2: Suy dữ liệu từ các dữ liệu hiện có.
-
-        // Xử lý tuổi - tính ra từ ngày sinh
-        // B1: Chuyển kiểu của birthDay thành kiểu Date
+        // B2: Tính toán dữ liệu từ các mảng dữ liệu trên.
+        // B2.1: Tính tuổi:
+        // Chuyển kiểu dữ liệu của birthDay từ String thành Date.
         const brthDay = new Date(birthDay);
-        // B2: Lấy ngày hiện tại
+        // Lấy ngày hiện tại.
         const currentDate = new Date();
-        // B3: Tính sự chênh lệch giữa hai mốc thời gian (đơn vị miliseconds)
+        // Tính sự chênh lệch giữa hai mốc thời gian (đơn vị miliseconds).
         const diffTime = Math.abs(currentDate - brthDay)
-        // B4: Quy đổi từ số miliseconds thành số ngày
+        // Quy đổi từ số miliseconds thành số ngày.
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        // B5: Quy đổi từ số ngày thành số năm (tuổi)
+        // Quy đổi từ số ngày thành số năm (tuổi).
         const age = Math.floor(diffDays / 365)
 
-        // Xử lý giới tính - quy đổi thành 0 và 1
-        const lowercaseGender = gender.toLowerCase();
-        const sex = lowercaseGender === "nam" ? 0 : 1;
+        // B2.2: Quy đổi giới tính thành hai số nguyên: 0, 1.
+        const lowerCaseGender = gender.toLowerCase();
+        const sex = lowerCaseGender === "nam" ? 0 : 1;
 
-        // Xử lý trtbps - suy ra từ spO2 - nếu huyết áp thấp thì lượng oxy cũng sẽ thấp theo
-        // Mức SpO2 bình thường nằm trong khoảng 95-100%.
-        // Mức SpO2 dưới 90% được xem là thấp và có thể cho thấy rối loạn hô hấp hoặc sự suy giảm hoạt động của tim.
-        // Người bị bệnh phổi tắc nghẽn mạn tính hoặc bệnh tiểu đường, mức SpO2 bình thường có thể dao động trong khoảng 90-95%.
-        //B1: Tạo một mảng các số đó oxygen có trong ngày hiện tại
-        const SpO2 = spO2.map((spo2) => {
+        // B2.3: Xử lý trtbps -> suy ra từ spO2 trên cơ sở nếu huyết áp thấp thì lượng oxy cũng thấp.
+        /*  
+            Mức SpO2 bình thường nằm trong khoảng 95-100%.
+            Mức SpO2 dưới 90% được xem là thấp và có thể cho thấy rối loạn hô hấp hoặc sự suy giảm hoạt động của tim.
+            Người bị bệnh phổi tắc nghẽn mạn tính hoặc bệnh tiểu đường, mức SpO2 bình thường có thể dao động trong khoảng 90-95%. 
+        */
+
+        // Tạo một mảng các giá trị số đo nồng độ Oxy từ mảng đối tượng SpO2 dựa vào ngày hiện tại.
+        const spO2Values = SpO2s.map((spo2) => {
             if (currentDate.getFullYear() === spo2.date.getFullYear() &&
                 currentDate.getMonth() === spo2.date.getMonth() &&
                 currentDate.getDate() === spo2.date.getDate()) {
                 return spo2.oxygen;
             }
         });
-        console.log(SpO2);
-        //B2: Tính trung bình cộng
-        const averSpO2 = Math.ceil((SpO2.reduce((sum, curr) => sum + curr, 0)) / SpO2.length);
-        //B3: Quy đổi:
-        // Mức trtbps bình thường là từ 90 đến 119 mmHg.
-        // Mức trtbps bất thường là từ 120 đến 200 mmHg.
-        const trtbps = averSpO2 ? ((averSpO2 >= 93 && averSpO2 <= 100) ? randomPredictData(90, 119) : randomPredictData(120, 200)) : 0;
+        console.log(spO2Values);
+        // Tính trung bình cộng tất cả các giá trị có trong mảng giá trị nồng độ Oxy.
+        const averSpO2 = Math.round((spO2Values.reduce((sum, curr) => sum + curr, 0)) / spO2Values.length);
+        // Quy đổi:
+        /*
+            Mức trtbps bình thường là từ 90 đến 119 mmHg.
+            Mức trtbps bất thường là từ 120 đến 200 mmHg.
+        */
+        let trtbps;
+        switch (true) {
+            case (averSpO2 >= 93 && averSpO2 <= 100):
+                trtbps = randomPredictData(90, 119)
+                break;
+            case (averSpO2 >= 70 && averSpO2 < 93):
+                chol = randomPredictData(240, 299)
+                break;
+            default:
+                trtbps = 0;
+                break;
+        }
 
-        // Xử lý cholesterol - suy ra từ chiều cao và cân nặng - chỉ số BMI có liên quan đến cholesterol
-        // Dưới 18.5: Gầy
-        // Từ 18.5 đến 24.9: Bình thường
-        // Từ 25.0 đến 29.9: Hơi béo
-        // Từ 30.0 đến 34.9: Béo phì độ I
-        // Từ 35.0 đến 39.9: Béo phì độ II
-        // Trên 40.0: Béo phì độ III
-        // B1: Chuẩn hoá lại thông tin
-        const wght = parseFloat(weight);
-        const hght = parseFloat(height)
-        // B2: Tính chỉ số bmi từ chiều cao và cân nặng và chuẩn hoá
-        const bmi = parseFloat((wght / ((hght / 100) ** 2)).toFixed(2));
-        // B3: Quy đổi:
-        // Cholesterol < 200 mg/dL (5.2 mmol/L) là bình thường
-        // chỉ số cholesterol ở người bình thường luôn duy trì mức 170mg/dL, đạt giới hạn trong khoảng 170 – 199mg/dL
-        // 200-239 mg/dL (5.2-6.2 mmol/L) được xem là tăng nguy cơ.
-        // ≥ 240 mg/dL (6.2 mmol/L) là mức độ cao.
-        const chol = (bmi >= 30 && bmi <= 34.9) ? randomPredictData(200, 239) :
-            (bmi >= 35 && bmi <= 39.9) ? randomPredictData(240, 299) :
-                (bmi >= 40) ? randomPredictData(300, 350) :
-                    randomPredictData(170, 199);
+        // B2.4: Xử lý cholesterol -> suy ra từ chiều cao và cân nặng trên cơ sở chỉ số BMI cao khiến cho lượng cholesterol xấu cao.
+        /* 
+            Dưới 18.5: Gầy.
+            Từ 18.5 đến 24.9: Bình thường.
+            Từ 25.0 đến 29.9: Hơi béo.
+            Từ 30.0 đến 34.9: Béo phì độ I.
+            Từ 35.0 đến 39.9: Béo phì độ II.
+            Trên 40.0: Béo phì độ III.
+        */
 
-        // Xử lý nhịp tim
-        // B1: Tạo một mảng các số đo của heartRate có trong ngày hiện tại.
-        const HR = heart.map((hr) => {
-            if (currentDate.getFullYear() === hr.date.getFullYear() &&
-                currentDate.getMonth() === hr.date.getMonth() &&
-                currentDate.getDate() === hr.date.getDate()) {
-                return hr.heartRate;
+        // Chuẩn hoá lại thông tin
+        const w = parseFloat(weight);
+        const h = parseFloat(height);
+        // Tính chỉ số bmi từ chiều cao và cân nặng và chuẩn hoá
+        const bmi = parseFloat((w / ((h / 100) ** 2)).toFixed(2));
+        // Quy đổi:
+        /* 
+            Chỉ số cholesterol ở người bình thường luôn duy trì mức 170mg/dL, đạt giới hạn ở mức 199mg/dL.
+            Chỉ số cholesterol ở mức 200-239 mg/dL (5.2-6.2 mmol/L) được xem là tăng nguy cơ.
+            Chỉ số cholesterol ở mức 240 mg/dL (6.2 mmol/L) trở lên được xem là nguy hiểm.
+        */
+        let chol;
+        switch (true) {
+            case (bmi >= 30 && bmi <= 34.9):
+                chol = randomPredictData(200, 239)
+                break;
+            case (bmi >= 35 && bmi <= 39.9):
+                chol = randomPredictData(240, 299)
+                break;
+            case (bmi >= 40):
+                chol = randomPredictData(300, 350)
+                break;
+            default:
+                chol = randomPredictData(170, 199);
+                break;
+        }
+
+        // B2.5: Xử lý nhịp tim.
+        // Tạo một mảng các giá trị số đo nhịp tim từ mảng đối tượng heartRate dựa vào ngày hiện tại.
+        const hrValues = heartRates.map((heartRate) => {
+            if (currentDate.getFullYear() === heartRate.date.getFullYear() &&
+                currentDate.getMonth() === heartRate.date.getMonth() &&
+                currentDate.getDate() === heartRate.date.getDate()) {
+                return heartRate.bmp;
             }
         });
-        console.log(HR);
-        // B2: Tính trung bình cộng
-        const averHR = Math.ceil((HR.reduce((sum, curr) => sum + curr, 0) / HR.length));
-        // B3: Quy đổi
+        console.log(hrValues);
+        // Tính trung bình cộng các giá trị số đo nhịp tim từ mảng số đo nhịp tim.
+        const averHR = Math.ceil((hrValues.reduce((sum, curr) => sum + curr, 0) / hrValues.length));
+        // Quy đổi.
         const thalachh = averHR ? averHR : 0;
 
-        // B1.3: Lưu lại dữ liệu
+        // B3: Lưu lại dữ liệu đã được xử lý thành công.
         const data = {
             age: age,
             sex: sex,
@@ -110,29 +150,46 @@ export const predict = async (req, res, next) => {
             oldpeak: req.body.oldpeak || -1,
         }
 
-        // B2: Gửi dữ liệu đến cho model AI để dự đoán và nhận phản hổi
+        // B4: Gửi mẫu dữ liệu data đến cho model AI để chuẩn đoán và nhận phản hổi.
         const result = await docterBot(data, next);
         console.log(parseInt(result));
-
-        // B3: Lưu vào History
-
-        req.history = { heartBeat: averHR, oxygen: averSpO2, isNotHealthy: parseInt(result) }
-
-        const newHistory = new History(req.history);
-        try {
-            await newHistory.save();
-        } catch (err) {
-            next(err);
-        }
-
-        // B5: Gửi kết quả đến cho client
-        const message = parseInt(result) === 0 ? "Tim ban dang khoe manh" : parseInt(result) === 1 ? "Ban co nguy co mac benh tim" : "ERROR";
-        res.status(200).json(
-            {
-                dataPredict: data,
-                heartHealthy: message
+        // Kiểm tra xem bác sĩ có đang đi làm không.
+        const isDocterWorking = result !== -1 ? true : false;
+        // B5: Lưu kết quả dự đoán vào History và lưu lại History vào User.
+        if (isDocterWorking) {
+            // Chuẩn hoá kết quả chuẩn đoán.
+            const isHealthy = parseInt(result) === 0 ? true : false;
+            // Tạo mới một req là req.history để truyền dữ liệu cho đối tượng mongoDB.
+            req.history = { heartBeat: averHR, oxygen: averSpO2, isHealthy: isHealthy }
+            // Tạo mới một đối tượng History với tham số truyền vào là req.history.
+            const newHistory = new History(req.history);
+            try {
+                // Lưu vào mongoDB.
+                const savedHistory = await newHistory.save();
+                // Lưu vào thuộc tính history của User.
+                await User.findByIdAndUpdate(
+                    userId,
+                    { $push: { history: savedHistory._id } },
+                )
+                // Tạo một thông báo là đã lưu.
+                var saveMessage = "Saved to history!"
+            } catch (err) {
+                next(err);
             }
-        );
+
+            // B6: Gửi kết quả dự đoán đến cho client.
+            const docterMessage = isHealthy ? "Tim ban dang khoe manh" : "Ban co nguy co mac benh tim";
+            res.status(200).json(
+                {
+                    dataPredict: data,
+                    isHealthy: isHealthy,
+                    docterSaid: docterMessage,
+                    historyResponse: saveMessage,
+                }
+            );
+        } else {
+            next(createError(500, "DocterBot is not found!"));
+        }
 
     } catch (err) {
         next(err)

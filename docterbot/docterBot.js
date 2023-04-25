@@ -1,40 +1,34 @@
-import path from "path";
 import onnx from "onnxruntime-node"
 import { fixedPath } from "../utils/fixedPath.js";
 import fs from "fs"
 
-// Chuyển đổi model AI từ py sang onnx
-// Gọi đến model onnx trong server nodejs
-// Chuyển đổi mẫu json trên thành các tensor
-// Truyền các tensor này cho model onnx để dự đoán
+
 const docterBot = async (dataPred, next) => {
 
-    const rootDirectoryPath = path.dirname(path.dirname(new URL(import.meta.url).pathname));
-    const filePath = path.join(rootDirectoryPath, "docterbot", "svm_disease_predict.onnx");
-    const modelPath = fixedPath(filePath);
+    // Đọc đường dẫn đến model AI.
+    const modelPath = fixedPath(["docterbot", "svm_disease_predict.onnx"]);
     console.log(modelPath);
 
     try {
-        // Kiểm tra xem đường dẫn thư mục có chuẩn không
+        // Kiểm tra xem đường dẫn đến model có chuẩn không.
         let session;
         if (fs.existsSync(modelPath)) {
-            // Tạo một phiên làm việc (session) với model docterbot ONNX để chuẩn đoán sức khoẻ tim mạch
+            // Tạo một phiên làm việc (session) với model docterbot ONNX để chuẩn đoán sức khoẻ tim mạch.
             session = await onnx.InferenceSession.create(modelPath);
         } else {
-            // Nếu sai thì trả về -1
+            // Nếu đường dẫn có vấn đề thì trả về -1
+            console.log("Wrong Model Path!");
             return -1;
         }
 
         // Chuyển đổi đối tượng data thành một mảng giá trị để chuẩn bị cho dữ liệu đâu vào.
         const dataValues = Object.values(dataPred);
-
-        // Chuẩn hoá dữ liệu đầu vào
-        // Chuyển mảng dataValues thành hai mảng giá trị có kiểu là int và float
+        // Chuẩn hoá dữ liệu đầu vào:
+        // Chuyển mảng dataValues thành hai mảng giá trị có kiểu là int và float.
+        // Mục đích: chuẩn hoá kiểu dữ liệu giống với tập train.
         const intInput = Int32Array.from(dataValues.slice(0, 9));
         const floatInput = Float32Array.from([dataValues[9]]);
-
-        // Tạo hai đối tượng tensor đầu vào từ hai mảng trên
-        // Mục đích là để chuẩn hoá kiểu dữ liệu giống với tập train
+        // Tạo hai đối tượng tensor cho đầu vào từ hai mảng trên.
         const tensorA = new onnx.Tensor("int32", intInput, [1, 9]);
         const tensorB = new onnx.Tensor("float32", floatInput, [1, 1]);
 
