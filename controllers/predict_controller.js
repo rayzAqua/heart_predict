@@ -153,12 +153,13 @@ export const predict = async (req, res, next) => {
         // B4: Gửi mẫu dữ liệu data đến cho model AI để chuẩn đoán và nhận phản hổi.
         const result = await docterBot(data, next);
         console.log(parseInt(result));
+
+        // B5: Lưu kết quả dự đoán vào History và lưu lại History vào User.
         // Kiểm tra xem bác sĩ có đang đi làm không.
         const isDocterWorking = result !== -1 ? true : false;
-        // B5: Lưu kết quả dự đoán vào History và lưu lại History vào User.
         if (isDocterWorking) {
             // Chuẩn hoá kết quả chuẩn đoán.
-            const isHealthy = parseInt(result) === 0 ? true : false;
+            var isHealthy = parseInt(result) === 0 ? true : false;
             // Tạo mới một req là req.history để truyền dữ liệu cho đối tượng mongoDB.
             req.history = { heartBeat: averHR, oxygen: averSpO2, isHealthy: isHealthy }
             // Tạo mới một đối tượng History với tham số truyền vào là req.history.
@@ -176,20 +177,20 @@ export const predict = async (req, res, next) => {
             } catch (err) {
                 next(err);
             }
-
-            // B6: Gửi kết quả dự đoán đến cho client.
-            const docterMessage = isHealthy ? "Tim ban dang khoe manh" : "Ban co nguy co mac benh tim";
-            res.status(200).json(
-                {
-                    dataPredict: data,
-                    isHealthy: isHealthy,
-                    docterSaid: docterMessage,
-                    historyResponse: saveMessage,
-                }
-            );
         } else {
             next(createError(500, "DocterBot is not found!"));
         }
+
+        // B6: Gửi kết quả dự đoán đến cho client.
+        const docterMessage = isHealthy ? "Tim ban dang khoe manh" : "Ban co nguy co mac benh tim";
+        res.status(200).json(
+            {
+                dataPredict: data,
+                isHealthy: isHealthy,
+                docterSaid: docterMessage,
+                historyResponse: saveMessage,
+            }
+        );
 
     } catch (err) {
         next(err)
