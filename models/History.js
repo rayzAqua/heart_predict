@@ -10,6 +10,10 @@ const HistorySchema = new mongoose.Schema(
             type: Number,
             required: true,
         },
+        temp: {
+            type: Number,
+            required: true,
+        },
         isHealthy: {
             type: Boolean,
         },

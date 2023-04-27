@@ -23,13 +23,14 @@ export const predict = async (req, res, next) => {
         const date = userData.map(({ date }) => date);
         // Từ mảng date, kết hợp từng phần tử của nó lần lượt với các thuộc tính heartRate, SpO2, temp để tạo ra các mảng
         // đối tượng heartRate, SpO2, temp.
-        const [heartRates, SpO2s, temp] = await Promise.all([
+        const [heartRates, SpO2s, temps] = await Promise.all([
             userData.map((data, index) => ({ bmp: data.heartRate, date: date[index] })),
             userData.map((data, index) => ({ oxygen: data.SpO2, date: date[index] })),
             userData.map((data, index) => ({ temperature: data.temp, date: date[index] })),
         ]);
         console.log("HeartRate: ", heartRates);
         console.log("SpO2: ", SpO2s);
+        console.log("Temparatured: ", temps);
 
         // B2: Tính toán dữ liệu từ các mảng dữ liệu trên.
         // B2.1: Tính tuổi:
@@ -56,13 +57,12 @@ export const predict = async (req, res, next) => {
         */
 
         // Tạo một mảng các giá trị số đo nồng độ Oxy từ mảng đối tượng SpO2 dựa vào ngày hiện tại.
-        const spO2Values = SpO2s.map((spo2) => {
-            if (currentDate.getFullYear() === spo2.date.getFullYear() &&
-                currentDate.getMonth() === spo2.date.getMonth() &&
-                currentDate.getDate() === spo2.date.getDate()) {
-                return spo2.oxygen;
+        const spO2Values = [];
+        for (const spo2 of SpO2s) {
+            if (currentDate.getFullYear() === spo2.date.getFullYear() && currentDate.getMonth() === spo2.date.getMonth() && currentDate.getDate() === spo2.date.getDate()) {
+                spO2Values.push(spo2.oxygen);
             }
-        });
+        }
         console.log(spO2Values);
         // Tính trung bình cộng tất cả các giá trị có trong mảng giá trị nồng độ Oxy.
         const averSpO2 = Math.round((spO2Values.reduce((sum, curr) => sum + curr, 0)) / spO2Values.length);
@@ -123,18 +123,29 @@ export const predict = async (req, res, next) => {
 
         // B2.5: Xử lý nhịp tim.
         // Tạo một mảng các giá trị số đo nhịp tim từ mảng đối tượng heartRate dựa vào ngày hiện tại.
-        const hrValues = heartRates.map((heartRate) => {
-            if (currentDate.getFullYear() === heartRate.date.getFullYear() &&
-                currentDate.getMonth() === heartRate.date.getMonth() &&
-                currentDate.getDate() === heartRate.date.getDate()) {
-                return heartRate.bmp;
+        const hrValues = [];
+        for (const heartRate of heartRates) {
+            if (currentDate.getFullYear() === heartRate.date.getFullYear() && currentDate.getMonth() === heartRate.date.getMonth() && currentDate.getDate() === heartRate.date.getDate()) {
+                hrValues.push(heartRate.bmp);
             }
-        });
+        }
         console.log(hrValues);
         // Tính trung bình cộng các giá trị số đo nhịp tim từ mảng số đo nhịp tim.
         const averHR = Math.round((hrValues.reduce((sum, curr) => sum + curr, 0) / hrValues.length));
         // Quy đổi.
         const thalachh = averHR ? averHR : 0;
+
+        //B2.6: Xử lý nhiệt độ.
+        // Tính trung bình cộng giá trị nhiệt độ.
+        const tempValues = [];
+        for (const tempvalue of temps) {
+            if (currentDate.getFullYear() === tempvalue.date.getFullYear() && currentDate.getMonth() === tempvalue.date.getMonth() && currentDate.getDate() === tempvalue.date.getDate()) {
+                tempValues.push(tempvalue.temperature);
+            }
+        }
+        console.log(tempValues);
+
+        const averTemp = Math.round((tempValues.reduce((sum, curr) => sum + curr, 0) / tempValues.length));
 
         // B3: Lưu lại dữ liệu đã được xử lý thành công.
         const data = {
@@ -161,7 +172,7 @@ export const predict = async (req, res, next) => {
             // Chuẩn hoá kết quả chuẩn đoán.
             var isHealthy = parseInt(result) === 0 ? true : false;
             // Tạo mới một req là req.history để truyền dữ liệu cho đối tượng mongoDB.
-            req.history = { heartBeat: averHR, oxygen: averSpO2, isHealthy: isHealthy }
+            req.history = { heartBeat: averHR, oxygen: averSpO2, temp: averTemp, isHealthy: isHealthy }
             // Tạo mới một đối tượng History với tham số truyền vào là req.history.
             const newHistory = new History(req.history);
             try {
