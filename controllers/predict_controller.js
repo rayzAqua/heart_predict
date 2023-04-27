@@ -66,6 +66,8 @@ export const predict = async (req, res, next) => {
         console.log(spO2Values);
         // Tính trung bình cộng tất cả các giá trị có trong mảng giá trị nồng độ Oxy.
         const averSpO2 = Math.round((spO2Values.reduce((sum, curr) => sum + curr, 0)) / spO2Values.length);
+        console.log(averSpO2);
+
         // Quy đổi:
         /*
             Mức trtbps bình thường là từ 90 đến 119 mmHg.
@@ -73,11 +75,11 @@ export const predict = async (req, res, next) => {
         */
         let trtbps;
         switch (true) {
-            case (averSpO2 >= 93 && averSpO2 <= 100):
+            case (averSpO2 >= 95 && averSpO2 <= 100):
                 trtbps = randomPredictData(90, 119)
                 break;
-            case (averSpO2 >= 70 && averSpO2 < 93):
-                chol = randomPredictData(240, 299)
+            case (averSpO2 >= 70 && averSpO2 < 95):
+                trtbps = randomPredictData(120, 200)
                 break;
             default:
                 trtbps = 0;
@@ -134,6 +136,7 @@ export const predict = async (req, res, next) => {
         const averHR = Math.round((hrValues.reduce((sum, curr) => sum + curr, 0) / hrValues.length));
         // Quy đổi.
         const thalachh = averHR ? averHR : 0;
+        console.log(thalachh);
 
         //B2.6: Xử lý nhiệt độ.
         // Tính trung bình cộng giá trị nhiệt độ.
