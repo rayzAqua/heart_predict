@@ -1,17 +1,17 @@
 import authRouter from "./auth.routes.js";
 import dataRouter from "./data.routes.js";
 import historyRouter from "./history.routes.js";
+
 import predictRouter from "./predicts.js";
-// import dataRouter from "./datas.js";
 
 function hieu56(app) {
   //viet route trong nay
   app.use("/account", authRouter);
 }
-const hieu57 = (app) => {
+const hieuLe = (app) => {
   //viet route trong nay
+
   app.use("/api/predict", predictRouter);
-  app.use("/api/data", dataRouter);
 };
 function hoa(app) {
   //viet route trong nay
@@ -22,7 +22,7 @@ function manh(app) {
 }
 function route(app) {
   hieu56(app);
-  hieu57(app);
+  hieuLe(app);
   hoa(app);
   manh(app);
   //API chung
