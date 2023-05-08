@@ -1,11 +1,17 @@
 import Data from "../models/Data.js";
 
 class DataControllers {
-  async createData(req, res) {
-    const newData = new Data(req.body);
+  async createData(req, res, next) {
     try {
-      const savedData = await newData.save();
-      res.status(200).json(savedData);
+      const { userInfo, heartRate, SpO2, temp, date } = req.body;
+      const newData = await Data.create({
+        userInfo,
+        heartRate,
+        SpO2,
+        temp,
+        date,
+      });
+      return res.status.json(newData);
     } catch (err) {
       return res.json({
         success: false,

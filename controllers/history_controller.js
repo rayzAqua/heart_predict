@@ -16,7 +16,7 @@ class HistoryController {
     var date = new Date();
     const data = await Data.findOne({ userInfo: user._id });
     if (data == null) {
-      const acccount = await Data.create({
+      const account = await Data.create({
         userInfo: user,
         heart: [{ heartRate: heart, date: date }],
         spO2: [{ oxygen: spO2, date: date }],
