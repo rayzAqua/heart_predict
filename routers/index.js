@@ -2,7 +2,7 @@ import authRouter from "./auth.routes.js";
 import dataRouter from "./data.routes.js";
 import historyRouter from "./history.routes.js";
 import predictRouter from "./predicts.js"
-import dataRouter from "./datas.js";
+
 
 function hieu56(app) {
   //viet route trong nay

@@ -1,5 +1,6 @@
 import Account from "../models/Account.js";
 import Data from "../models/Data.js";
+import * as tf from '@tensorflow/tfjs'
 class HistoryController {
   async getHistory(req, res, next) {
     const user = JSON.parse(req.user);
@@ -39,6 +40,10 @@ class HistoryController {
       message: "Thành công",
       data: {},
     })
+  }
+  async testPredict(req,res,next){
+    const model = await tf.loadGraphModel('../heart_predict/my_model/my_model')
+    res.send({status:'ioj'})
   }
 }
 
