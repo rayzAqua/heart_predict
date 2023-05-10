@@ -24,7 +24,11 @@ async function authenticateToken(req, res, next) {
       });
     }
 
+<<<<<<< HEAD
     req.body = { ...decoded, ...req.body,...user};
+=======
+    req.body = { ...decoded, ...req.body, user };
+>>>>>>> f7a4bfae704097ba5d98c9d8a9042c60ba5f5049
     next();
   } catch (error) {
     if (error.message == "jwt expired") {
