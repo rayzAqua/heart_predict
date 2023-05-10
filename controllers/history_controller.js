@@ -1,10 +1,8 @@
 import Account from "../models/Account.js";
 import Data from "../models/Data.js";
-import * as tf from '@tensorflow/tfjs'
 class HistoryController {
   async getHistory(req, res, next) {
-    const user = JSON.parse(req.user);
-    const data = await Data.findOne({ userInfo: user._id });
+    const data = await Data.find({ userInfo: req.body._doc.userInfo });
     res.status(200).json({
       status: true,
       message: "Thành công",
@@ -17,7 +15,7 @@ class HistoryController {
     var date = new Date();
     const data = await Data.findOne({ userInfo: user._id });
     if (data == null) {
-      const acccount = await Data.create({
+      const account = await Data.create({
         userInfo: user,
         heart: [{ heartRate: heart, date: date }],
         spO2: [{ oxygen: spO2, date: date }]
@@ -41,10 +39,7 @@ class HistoryController {
       data: {},
     })
   }
-  async testPredict(req,res,next){
-    const model = await tf.loadGraphModel('../heart_predict/my_model/my_model')
-    res.send({status:'ioj'})
-  }
+
 }
 
 export default new HistoryController();

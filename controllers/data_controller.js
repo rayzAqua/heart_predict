@@ -1,30 +1,36 @@
 import Data from "../models/Data.js";
 
-class DataControllers{
-    async createData(req, res, next){
-        const newData = new Data(req.body);
-        try{
-            const savedData = await newData.save();
-            res.status(200).json(savedData);
-        }catch(err){
-            return res.status(200).json({
-                status: false,
+class DataControllers {
+    async createData(req, res, next) {        
+        try {
+            const {
+                userInfo, heartRate, SpO2, temp, date
+            } = req.body;
+            const newData = await Data.create({
+                userInfo, heartRate, SpO2, temp, date
+            });
+            return res.status.json(newData);           
+        } catch (err) {
+            return res.json({
+                success: false,
+                status: err.status,
                 message: err.message,
-                data: { err },
-              });
+                stack: err.stack,
+            });
         }
     }
 
-    async getLatestData(req, res, next){
-        try{
-            const data = await Data.findOne({userInfo: req.params.id})
+    async getLatestData(req, res) {
+        try {
+            const data = await Data.findOne({ userInfo: req.params.id })
             res.status(200).json(data);
-        }catch(err){
-            return res.status(200).json({
-                status: false,
+        } catch (err) {
+            return res.json({
+                success: false,
+                status: err.status,
                 message: err.message,
-                data: { err },
-              });
+                stack: err.stack,
+            });
         }
     }
 }
