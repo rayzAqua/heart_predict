@@ -159,11 +159,10 @@ export const predict = async (req, res, next) => {
         // Tính trung bình cộng giá trị nhiệt độ.
         const tempValues = [];
         for (const tempvalue of temps) {
-            if (currentDate.getFullYear() === tempvalue.date.getFullYear() && currentDate.getMonth() === tempvalue.date.getMonth() && currentDate.getDate() === tempvalue.date.getDate()) {
+            if (tempvalue.date.getTime() <= timeStamp.getTime()) {
                 tempValues.push(tempvalue.temperature);
             }
         }
-        console.log(tempValues);
 
         const averTemp = Math.round((tempValues.reduce((sum, curr) => sum + curr, 0) / tempValues.length));
 
