@@ -95,7 +95,7 @@ export const predict = async (req, res, next) => {
             case (averSpO2 >= 95 && averSpO2 <= 100):
                 trtbps = randomPredictData(90, 119)
                 break;
-            case (averSpO2 >= 70 && averSpO2 < 95):
+            case (averSpO2 >= 80 && averSpO2 < 95):
                 trtbps = randomPredictData(120, 200)
                 break;
             default:
