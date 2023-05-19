@@ -13,7 +13,7 @@ export const predict = async (req, res, next) => {
     const userId = req.params.userid;
     const time = req.body.timeStamp;
     const timeStamp = new Date(time);
-    console.log(userId);
+    console.log(typeof userId);
     console.log(timeStamp);
 
     try {
@@ -23,6 +23,7 @@ export const predict = async (req, res, next) => {
         // B1.2: Truy vấn data cảm biến dựa trên id user.
         const userData = await Data.find({ userInfo: userId });
         console.log(userStat);
+        console.log(userData);
 
         // B1.3: Trích xuất dữ liệu và tiến hành xử lý dữ liệu
         // Trích xuất dữ liệu chỉ số từ userStat
@@ -76,7 +77,7 @@ export const predict = async (req, res, next) => {
         // Tạo một mảng các giá trị số đo nồng độ Oxy từ mảng đối tượng SpO2 dựa vào ngày hiện tại.
         const spO2Values = [];
         for (const spo2 of SpO2s) {
-            if (spo2.date.getTime() <= timeStamp.getTime()) {
+            if (spo2.date.getHours() <= timeStamp.getHours() && spo2.date.getDate() == timeStamp.getDate() && spo2.date.getMonth() == timeStamp.getMonth() && spo2.date.getFullYear() == timeStamp.getFullYear()) {
                 spO2Values.push(spo2.oxygen);
             }
         }
@@ -144,7 +145,7 @@ export const predict = async (req, res, next) => {
         // Tạo một mảng các giá trị số đo nhịp tim từ mảng đối tượng heartRate dựa vào ngày hiện tại.
         const hrValues = [];
         for (const heartRate of heartRates) {
-            if (heartRate.date.getTime() <= timeStamp.getTime()) {
+            if (heartRate.date.getHours() <= timeStamp.getHours() && heartRate.date.getDate() == timeStamp.getDate() && heartRate.date.getMonth() == timeStamp.getMonth() && heartRate.date.getFullYear() == timeStamp.getFullYear()) {
                 hrValues.push(heartRate.bmp);
             }
         }
@@ -159,12 +160,14 @@ export const predict = async (req, res, next) => {
         // Tính trung bình cộng giá trị nhiệt độ.
         const tempValues = [];
         for (const tempvalue of temps) {
-            if (tempvalue.date.getTime() <= timeStamp.getTime()) {
+            if (tempvalue.date.getHours() <= timeStamp.getHours() && tempvalue.date.getDate() == timeStamp.getDate() && tempvalue.date.getMonth() == timeStamp.getMonth() && tempvalue.date.getFullYear() == timeStamp.getFullYear()) {
                 tempValues.push(tempvalue.temperature);
             }
         }
+        console.log(tempValues);
 
         const averTemp = Math.round((tempValues.reduce((sum, curr) => sum + curr, 0) / tempValues.length));
+        console.log(averTemp);
 
         // B3: Lưu lại dữ liệu đã được xử lý thành công.
         const data = {
