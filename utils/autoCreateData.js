@@ -37,7 +37,7 @@ function autoCreateData() {
                         SpO2: SpO2,
                         temp: temp,
                         date: date
-                    })
+                    });
 
                 }
                 else if (startDate.getDate() % 2 != 0) {
@@ -55,7 +55,7 @@ function autoCreateData() {
                         SpO2: SpO2,
                         temp: temp,
                         date: date
-                    })
+                    });
 
                 }
             }
@@ -77,6 +77,3 @@ fs.writeFileSync(fixedPath(["utils", "data.json"]), jsonResult, (err) => {
     }
     console.log("File Saved!");
 })
-
-const newData = new Data(jsonResult);
-await newData.save();

@@ -45,14 +45,7 @@ export const predict = async (req, res, next) => {
         // B2: Tính toán dữ liệu từ các mảng dữ liệu trên.
         // B2.1: Tính tuổi:
         // Chuyển kiểu dữ liệu của birthDay từ String thành Date:
-        // - Tách chuỗi thành mảng các phần tử.
-        const parts = birthDay.split('/');
-        // - Lấy giá trị ngày, tháng và năm từ mảng parts.
-        const day = parseInt(parts[0]);
-        const month = parseInt(parts[1]) - 1; // Giảm đi 1 vì tháng trong JavaScript bắt đầu từ 0.
-        const year = parseInt(parts[2]);
-        // - Chuyển đổi thành kiểu Date.
-        const brthDay = new Date(year, month, day);
+        const brthDay = new Date(birthDay);
         console.log(brthDay);
         // Lấy ngày hiện tại.
         const currentDate = new Date();

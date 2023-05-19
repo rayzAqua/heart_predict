@@ -3,4 +3,17 @@ import mongoose from "mongoose";
 
 const ObjectId = mongoose.Types.ObjectId;
 
-await Data.updateMany({userInfo: "644206edaf3edb5a506e9455"}, {$set: {userInfo: new ObjectId("644206edaf3edb5a506e9455")}})
+const run = async () => {
+    try {
+        await mongoose.connect("mongodb+srv://hieule:hieule@cluster0.tnyemed.mongodb.net/heart_predict?retryWrites=true&w=majority");
+        console.log("Connected!");
+
+    } catch (error) {
+        throw error;
+    }
+
+    await Data.updateMany({}, { $set: { userInfo: new ObjectId("644206edaf3edb5a506e9455") } });
+    console.log("Updated!");
+}
+
+run()
