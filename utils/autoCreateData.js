@@ -1,11 +1,13 @@
 import fs from "fs";
 import { randomPredictData } from "./randomPredictData.js";
 import { fixedPath } from "./fixedPath.js";
+import mongoose from "mongoose";
+import Data from "../models/Data.js";
 
 function autoCreateData() {
     const data = [];
     const startDate = new Date();
-    startDate.setUTCHours(17, 0, 0, 0);
+    startDate.setUTCHours(0, 0, 0, 0);
     const endDate = new Date(startDate.getTime() + 10 * 24 * 60 * 60 * 1000);
     console.log(startDate);
     console.log(endDate);
@@ -22,7 +24,7 @@ function autoCreateData() {
             for (let doc = 0; doc < 5; doc++) {
                 if (startDate.getDate() % 2 == 0) {
                     // console.log(startDate.getDate());
-                    const userInfo = "644206edaf3edb5a506e9455";
+                    const userInfo = '644206edaf3edb5a506e9455';
                     const heartRate = randomPredictData(102, 202);
                     const SpO2 = randomPredictData(80, 95);
                     const temp = randomPredictData(36.5, 36.8);
@@ -35,12 +37,12 @@ function autoCreateData() {
                         SpO2: SpO2,
                         temp: temp,
                         date: date
-                    })
+                    });
 
                 }
                 else if (startDate.getDate() % 2 != 0) {
                     // console.log(startDate.getDate());
-                    const userInfo = "644206edaf3edb5a506e9455";
+                    const userInfo = '644206edaf3edb5a506e9455';
                     const heartRate = randomPredictData(60, 101);
                     const SpO2 = randomPredictData(96, 100);
                     const temp = randomPredictData(36.5, 36.8);
@@ -53,10 +55,9 @@ function autoCreateData() {
                         SpO2: SpO2,
                         temp: temp,
                         date: date
-                    })
+                    });
 
                 }
-
             }
         }
         startDate.setDate(startDate.getDate() + 1);
