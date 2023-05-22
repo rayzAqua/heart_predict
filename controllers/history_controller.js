@@ -50,9 +50,9 @@ class HistoryController {
     const userStat = await User.findOne({
       _id: req.body._doc.userInfo._id,
     });
-    let page= 1;
-    page= req.params.page;
-    const data = await History.find({ _id: { $in: userStat.history.slice(Number(page)-10,Number(page)*10) } });
+   
+    var page= req.query.page || 1;
+    const data = await History.find({ _id: { $in: userStat.history.slice(Number(page)*10-10,Number(page)*10) } });
     res.status(200).json({
       status: true,
       message: "Thành công",
