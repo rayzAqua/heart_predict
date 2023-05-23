@@ -204,15 +204,15 @@ void displayValues()
 }
 void checkValidvalues()
 {
-  if (heartRate >= 60 && heartRate <= 130)
+  if (heartRate >= 50 && heartRate <= 130)
   {
     validHR = heartRate;
   }
-  if (temp >= 32 && temp <= 37.5)
+  if (temp >= 34 && temp <= 40)
   {
     validTemp = temp;
   }
-  if (spO2 >= 80 && spO2 <= 120)
+  if (spO2 >= 85 && spO2 <= 100)
   {
     validSpO2 = spO2;
   }

@@ -170,9 +170,9 @@ export const predict = async (req, res, next) => {
         thalachh: thalachh,
         exng: req.body.exng,
         oldpeak: req.body.oldpeak || -1,
-        bmp: hrValues,
-        spo2: spO2Values,
-        temp: tempValues,
+        bmp: averHR,
+        spo2: averSpO2,
+        temp: averTemp,
       };
 
       // B4: Gửi mẫu dữ liệu data đến cho model AI để chuẩn đoán và nhận phản hổi.
