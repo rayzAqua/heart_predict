@@ -44,12 +44,12 @@ const byte RATE_SIZE = 4; // Increase this for more averaging. 4 is good.
 byte rates[RATE_SIZE];    // Array of heart rates
 byte rateSpot = 0;
 long lastBeat = 0; // Time at which the last beat occurred
-
-float beatsPerMinute;
-int beatAvg;
-
-float temp;
+float temp = 0;
+float validTemp = 0;
+int validHR = 0;
+int validSpO2 = 0;
 int buzzer = 0;
+
 long curentTime = millis();
 
 int32_t bufferLength;  // data lengthr
@@ -70,7 +70,7 @@ void setup()
   Serial.println("Initializing...");
   // pinMode(pulseLED, OUTPUT);
   // pinMode(readLED, OUTPUT);
-  // configFirebase();
+  configFirebase();
   pinMode(buzzer, OUTPUT);
   // Initialize sensor
   while (!particleSensor.begin(Wire, I2C_SPEED_FAST)) // Use default I2C port, 400kHz speed
@@ -86,7 +86,6 @@ void setup()
   display.display();
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW);
-  setUpOled();
 }
 void loop()
 {
@@ -95,40 +94,25 @@ void loop()
   {
     Serial.println("No finger ?");
     displayNoFinger();
-    turnOnBuzzer();
+    turnOnBuzzer(500);
   }
   else
   {
+    displayValues();
     if (checkForBeat(irValue) == true)
     {
-      // long delta = millis() - lastBeat;
-      // lastBeat = millis();
-      // beatsPerMinute = 60 / (delta / 1000.0);
-      // if (beatsPerMinute < 255 && beatsPerMinute > 20) {
-      //   rates[rateSpot++] = (byte)beatsPerMinute;  //Store this reading in the array
-      //   rateSpot %= RATE_SIZE;                     //Wrap variable
-      //   //Take average of readings
-      //   beatAvg = 0;
-      //   for (byte x = 0; x < RATE_SIZE; x++)
-      //     beatAvg += rates[x];
-      //   beatAvg /= RATE_SIZE;
-      // }
       readHeartRateAndSpO2();
       temp = particleSensor.readTemperature();
+      checkValidvalues();
       displaySerial();
       displayValues();
-      // if(checkValuesToDisplay()) {
-      //   checkValuesToAlert();
-      //   displaySerial(irValue);
-      //   displayOled();
-      //   sendDataToFireBase();
-      // }
+      sendDataToFireBase();
     }
   }
 }
 void readHeartRateAndSpO2()
 {
-  bufferLength = 100; // buffer length of 100 stores 4 seconds of samples running at 25sps
+  bufferLength = 40; // buffer length of 100 stores 4 seconds of samples running at 25sps
 
   // read the first 100 samples, and determine the signal range
   for (byte i = 0; i < bufferLength; i++)
@@ -139,11 +123,6 @@ void readHeartRateAndSpO2()
     redBuffer[i] = particleSensor.getRed();
     irBuffer[i] = particleSensor.getIR();
     particleSensor.nextSample(); // We're finished with this sample so move to next sample
-
-    Serial.print(F("red="));
-    Serial.print(redBuffer[i], DEC);
-    Serial.print(F(", ir="));
-    Serial.println(irBuffer[i], DEC);
   }
 
   // calculate heart rate and SpO2 after first 100 samples (first 4 seconds of samples)
@@ -152,20 +131,18 @@ void readHeartRateAndSpO2()
   // Continuously taking samples from MAX30102.  Heart rate and SpO2 are calculated every 1 second
 
   // dumping the first 25 sets of samples in the memory and shift the last 75 sets of samples to the top
-  for (byte i = 25; i < 100; i++)
+  for (byte i = 10; i < 40; i++)
   {
-    redBuffer[i - 25] = redBuffer[i];
-    irBuffer[i - 25] = irBuffer[i];
+    redBuffer[i - 10] = redBuffer[i];
+    irBuffer[i - 10] = irBuffer[i];
   }
 
   // take 25 sets of samples before calculating the heart rate.
-  for (byte i = 75; i < 100; i++)
+  for (byte i = 30; i < 40; i++)
   {
     while (particleSensor.available() == false) // do we have new data?
       particleSensor.check();                   // Check the sensor for new data
-
     // digitalWrite(readLED, !digitalRead(readLED));  //Blink onboard LED with every data read
-
     redBuffer[i] = particleSensor.getRed();
     irBuffer[i] = particleSensor.getIR();
     particleSensor.nextSample(); // We're finished with this sample so move to next sample
@@ -210,45 +187,45 @@ void displayValues()
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.print("Nhip tim: ");
-  display.setCursor(52, 0);
-  display.print(heartRate, 0);
-
+  display.setCursor(58, 0);
+  display.print(validHR, 0);
+  display.print(" bpm");
   display.setCursor(0, 12);
   display.print("Nhiet do: ");
-  display.setCursor(52, 12);
-  display.print(temp, 1);
+  display.setCursor(58, 12);
+  display.print(validTemp, 1);
   display.print(" *C");
-
   display.setCursor(0, 24);
   display.print("SpO2: ");
-  display.setCursor(52, 24);
-  display.print(spO2, 0);
-  display.print("%");
+  display.setCursor(58, 24);
+  display.print(validSpO2, 0);
+  display.print(" %");
   display.display();
 }
-void setUpOled()
+void checkValidvalues()
 {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
-  display.print("Nhip tim: ");
-  display.setCursor(0, 12);
-  display.print("Nhiet do: ");
-  display.setCursor(0, 24);
-  display.print("SpO2: ");
-  display.display();
+  if (heartRate >= 60 && heartRate <= 130)
+  {
+    validHR = heartRate;
+  }
+  if (temp >= 32 && temp <= 37.5)
+  {
+    validTemp = temp;
+  }
+  if (spO2 >= 80 && spO2 <= 120)
+  {
+    validSpO2 = spO2;
+  }
 }
+
 void displaySerial()
 {
-  Serial.print("BPM= ");
-  Serial.print(beatsPerMinute, 0);
+  Serial.print("HeartRate= ");
+  Serial.print(heartRate, 0);
   Serial.print("temperatureC= ");
   Serial.print(temp, 1);
   Serial.print(" ,SpO2= ");
-  Serial.print(spO2, 0);
-  Serial.print(", heartRate= ");
-  Serial.println(heartRate, 0);
+  Serial.println(spO2, 0);
 }
 void configSensor()
 {
@@ -295,7 +272,7 @@ void sendDataToFireBase()
   {
     sendDataPrevMillis = millis();
     // Write an Int number on the database path test/spo2
-    if (Firebase.RTDB.setInt(&fbdo, "test/spo2", spO2))
+    if (Firebase.RTDB.setInt(&fbdo, "test/spo2", validSpO2))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + fbdo.dataPath());
@@ -307,7 +284,7 @@ void sendDataToFireBase()
       Serial.println("REASON: " + fbdo.errorReason());
     }
     count++;
-    if (Firebase.RTDB.setInt(&fbdo, "test/led", val))
+    if (Firebase.RTDB.setInt(&fbdo, "test/led", 1))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + fbdo.dataPath());
@@ -324,7 +301,7 @@ void sendDataToFireBase()
       digitalWrite(ledPin, LOW);
 
     // Write an Float number on the database path test/bmp
-    if (Firebase.RTDB.setInt(&fbdo, "test/bmp", beatsPerMinute))
+    if (Firebase.RTDB.setInt(&fbdo, "test/bmp", validHR))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + fbdo.dataPath());
@@ -337,7 +314,7 @@ void sendDataToFireBase()
     }
 
     // Write an Float number on the database path test/temp
-    if (Firebase.RTDB.setFloat(&fbdo, "test/temp", temp))
+    if (Firebase.RTDB.setFloat(&fbdo, "test/temp", validTemp))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + fbdo.dataPath());
@@ -350,47 +327,20 @@ void sendDataToFireBase()
     }
   }
 }
-void turnOnBuzzer()
+void turnOnBuzzer(long time)
 {
   digitalWrite(buzzer, HIGH);
-  delay(1000);
+  delay(time);
   digitalWrite(buzzer, LOW);
 }
-bool checkValuesToDisplay()
-{
-  if ((beatsPerMinute >= 50) && (beatsPerMinute <= 120))
-  {
-    if (spO2 >= 90)
-    {
-      return true;
-    }
-    else
-      return false;
-  }
-  else
-    return false;
-}
-void checkValuesToAlert(){
-    // bool checked = ((beatsPerMinute <= 60) || (beatsPerMinute >= 100)) || (spO2 < 94) || ((temp <= 36) || (temp > 37.5));
-    // if (checked) {
-    //   turnOnBuzzer();
-    // };
-    // if (spO2 >= 80 && spO2 < 90) {
-    //   if (time == 0) time = milis();
-    //   if ((milis() - time) >= 500) {
-    //     Serial.println("Coi hu")
-    //       //turnOnBuzzer();
-    //       time = milis();
-    //   }
-    // } else time = 0;
-};
-
 void displayNoFinger()
 {
   display.clearDisplay();
-  display.setTextSize(2);
+  display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 8);
-  display.print("No finger!");
+  display.setCursor(10, 5);
+  display.print("Hay deo thiet");
+  display.setCursor(10, 25);
+  display.print("bi vao tay !");
   display.display();
 }
