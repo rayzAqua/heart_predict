@@ -22,10 +22,7 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 unsigned long sendDataPrevMillis = 0;
-int count = 0;
 bool signupOK = false;
-const int ledPin = 2;
-int val = 0;
 /*-----------------------------------------------------------------------------------*/
 
 #include <Wire.h>
@@ -64,11 +61,18 @@ uint32_t redBuffer[100];  // red LED sensor data
 // byte readLED = 13;        //Blinks with each data read
 
 /*-----------------------------------------------------------*/
+
+float beatsPerMinute;
+int beatAvg;
+
+
+long timewait1, timewait2;
+bool canSend = false;
+
+
 void setup() {
   Serial.begin(9600);
   Serial.println("Initializing...");
-  // pinMode(pulseLED, OUTPUT);
-  // pinMode(readLED, OUTPUT);
   configFirebase();
   pinMode(buzzer, OUTPUT);
   // Initialize sensor
@@ -82,22 +86,21 @@ void setup() {
   configSensor();
   display.clearDisplay();
   display.display();
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
 }
 void loop() {
   long irValue = particleSensor.getIR();
   if (irValue < 5000) {
     Serial.println("No finger ?");
     displayNoFinger();
-    turnOnBuzzer(500);
+    //    turnOnBuzzer(500);
   } else {
     displayValues();
     if (checkForBeat(irValue) == true) {
       //We sensed a beat!
-      long delta = millis() - lastBeat;
+      long delta = millis() - lastBeat - (timewait2- timewait1);
       lastBeat = millis();
-
+      
+      
       beatsPerMinute = 60 / (delta / 1000.0);
 
       if (beatsPerMinute < 255 && beatsPerMinute > 20) {
@@ -110,17 +113,24 @@ void loop() {
           beatAvg += rates[x];
         beatAvg /= RATE_SIZE;
       }
+
+      timewait1 = millis();
       readHeartRateAndSpO2();
       temp = particleSensor.readTemperature();
       checkValidvalues();
       displaySerial();
       displayValues();
       sendDataToFireBase();
+      timewait2 = millis();
     }
   }
 }
+
 void readHeartRateAndSpO2() {
   bufferLength = 40;  // buffer length of 100 stores 4 seconds of samples running at 25sps
+
+//  particleSensor.setSampleRate(100);
+
 
   // read the first 100 samples, and determine the signal range
   for (byte i = 0; i < bufferLength; i++) {
@@ -129,60 +139,12 @@ void readHeartRateAndSpO2() {
 
     redBuffer[i] = particleSensor.getRed();
     irBuffer[i] = particleSensor.getIR();
+    
     particleSensor.nextSample();  // We're finished with this sample so move to next sample
+    
   }
 
   // calculate heart rate and SpO2 after first 100 samples (first 4 seconds of samples)
-  maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spO2, &validSPO2, &heartRate, &validHeartRate);
-
-  // Continuously taking samples from MAX30102.  Heart rate and SpO2 are calculated every 1 second
-
-  // dumping the first 25 sets of samples in the memory and shift the last 75 sets of samples to the top
-  for (byte i = 10; i < 40; i++) {
-    redBuffer[i - 10] = redBuffer[i];
-    irBuffer[i - 10] = irBuffer[i];
-  }
-
-  // take 25 sets of samples before calculating the heart rate.
-  for (byte i = 30; i < 40; i++) {
-    while (particleSensor.available() == false)  // do we have new data?
-      particleSensor.check();                    // Check the sensor for new data
-    // digitalWrite(readLED, !digitalRead(readLED));  //Blink onboard LED with every data read
-    redBuffer[i] = particleSensor.getRed();
-    irBuffer[i] = particleSensor.getIR();
-    particleSensor.nextSample();  // We're finished with this sample so move to next sample
-
-    // send samples and calculation result to terminal program through UART
-    Serial.print(F("red="));
-    Serial.print(redBuffer[i], DEC);
-    Serial.print(F(", ir="));
-    Serial.print(irBuffer[i], DEC);
-
-    Serial.print(F(", HR="));
-    Serial.print(heartRate, DEC);
-
-    Serial.print(F(", HRvalid="));
-    Serial.print(validHeartRate, DEC);
-
-    Serial.print(F(", SPO2="));
-    Serial.print(spO2, DEC);
-
-    Serial.print(F(", SPO2Valid="));
-    Serial.println(validSPO2, DEC);
-
-    // if (spO2 >= 80 && spO2 < 90) {
-    //   if (curentTime == 0) curentTime = millis();
-    //   if ((millis()
-    //        - curentTime)
-    //       >= 500) {
-    //     Serial.println("Coi hu");
-    //       //turnOnBuzzer();
-    //       curentTime = millis();
-    //   }
-    // } else curentTime = 0;
-  }
-
-  // After gathering 25 new samples recalculate HR and SP02
   maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spO2, &validSPO2, &heartRate, &validHeartRate);
 }
 void displayValues() {
@@ -207,24 +169,32 @@ void displayValues() {
   display.display();
 }
 void checkValidvalues() {
-  if (heartRate >= 50 && heartRate <= 130) {
-    validHR = heartRate;
+  if (beatAvg >= 50 && beatAvg <= 130) {
+    validHR = beatAvg;
+    canSend = true;
   }
-  if (temp >= 34 && temp <= 40) {
+  
+  if (temp >= 30 && temp <= 40) {
     validTemp = temp;
+    canSend = true;
   }
   if (spO2 >= 85 && spO2 <= 100) {
     validSpO2 = spO2;
+    canSend = true;
   }
 }
 
 void displaySerial() {
   Serial.print("HeartRate= ");
   Serial.print(heartRate, 0);
-  Serial.print("temperatureC= ");
+  Serial.print(" ,temperatureC= ");
   Serial.print(temp, 1);
   Serial.print(" ,SpO2= ");
-  Serial.println(spO2, 0);
+  Serial.print(spO2, 0);
+  Serial.print(" ,beatsPerMinute= ");
+  Serial.print(beatsPerMinute, 0);
+  Serial.print(" ,beatAvg= ");
+  Serial.println(beatAvg, 0);
 }
 void configSensor() {
   particleSensor.setup();                     // Configure sensor with default settings
@@ -259,37 +229,29 @@ void configFirebase() {
   Firebase.reconnectWiFi(true);
 }
 void sendDataToFireBase() {
-  val = digitalRead(ledPin);
-  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 1000 || sendDataPrevMillis == 0)) {
-    sendDataPrevMillis = millis();
+
+  if (Firebase.ready() && signupOK && canSend ==true) {
+    canSend  = false;
+
     // Write an Int number on the database path test/spo2
     if (Firebase.RTDB.setInt(&fbdo, "test/spo2", validSpO2)) {
-      Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo.dataPath());
-      Serial.println("TYPE: " + fbdo.dataType());
+
     } else {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.errorReason());
     }
-    count++;
+
     if (Firebase.RTDB.setInt(&fbdo, "test/led", 1)) {
-      Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo.dataPath());
-      Serial.println("TYPE: " + fbdo.dataType());
+
     } else {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.errorReason());
     }
-    if (val == 0)
-      digitalWrite(ledPin, HIGH);
-    else
-      digitalWrite(ledPin, LOW);
+
 
     // Write an Float number on the database path test/bmp
     if (Firebase.RTDB.setInt(&fbdo, "test/bmp", validHR)) {
-      Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo.dataPath());
-      Serial.println("TYPE: " + fbdo.dataType());
+
     } else {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.errorReason());
@@ -297,9 +259,7 @@ void sendDataToFireBase() {
 
     // Write an Float number on the database path test/temp
     if (Firebase.RTDB.setFloat(&fbdo, "test/temp", validTemp)) {
-      Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo.dataPath());
-      Serial.println("TYPE: " + fbdo.dataType());
+
     } else {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.errorReason());
