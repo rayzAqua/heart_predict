@@ -23,6 +23,7 @@ FirebaseConfig config;
 
 unsigned long sendDataPrevMillis = 0;
 bool signupOK = false;
+const int ledPin = 2;
 /*-----------------------------------------------------------------------------------*/
 
 #include <Wire.h>
@@ -69,6 +70,15 @@ int beatAvg;
 long timewait1, timewait2;
 bool canSend = false;
 
+//--------------------------------------------
+int unsafeHR = 0;
+int unsafeSpO2 = 0;
+int unsafeTemp = 0;
+
+
+
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -86,6 +96,8 @@ void setup() {
   configSensor();
   display.clearDisplay();
   display.display();
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
 }
 void loop() {
   long irValue = particleSensor.getIR();
@@ -182,7 +194,9 @@ void checkValidvalues() {
     validSpO2 = spO2;
     canSend = true;
   }
-}
+
+  warning();
+  }
 
 void displaySerial() {
   Serial.print("HeartRate= ");
@@ -280,4 +294,32 @@ void displayNoFinger() {
   display.setCursor(10, 25);
   display.print("bi vao tay !");
   display.display();
+}
+
+//-------------------------------------------------
+
+void warning() {
+  
+  if ((validHR < 60 || heartRate > 100) && validHR!=0 && validTemp !=0 && validSpO2!=0 ) {
+    if (++unsafeHR >= 5) {
+      // displayWarning("Nhip tim")
+      turnOnBuzzer(unsafeHR * 200);
+    }
+  } else {
+    unsafeHR = 0;
+  }
+  if ((validTemp < 34 || validTemp > 37.5) && validHR!=0 && validTemp !=0 && validSpO2!=0) {
+    if (++unsafeTemp >= 5) {
+      // displayWarning("Nhiet do")
+      turnOnBuzzer(unsafeTemp * 200);
+    }
+  } else {
+    unsafeTemp = 0;
+    }
+  if(validSpO2 < 94 && validHR!=0 && validTemp !=0 && validSpO2!=0){
+    if (++unsafeSpO2 >= 5) {
+      // displayWarning("Nong do oxi")
+      turnOnBuzzer(unsafeSpO2 * 200);
+    }
+  } else unsafeSpO2 = 0;
 }
