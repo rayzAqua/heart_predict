@@ -75,6 +75,8 @@ int unsafeSpO2 = 0;
 int unsafeTemp = 0;
 //-----------------------------------------------------------
 
+
+
 void setup() {
   Serial.begin(9600);
   Serial.println("Initializing...");  
@@ -181,7 +183,6 @@ void checkValidvalues() {
     validSpO2 = spO2;
     canSend = true;
   }
-
   warning();
 }
 void displaySerial() {
@@ -300,9 +301,10 @@ void warning(){
     unsafeHR = 0;
   }
 
+
   if ((validTemp < 34 || validTemp > 37.5) && validTemp != 0) {
     if (++unsafeTemp >= 5) {
-      displayTempWarning();
+      displayTempWarning();  
       turnOnBuzzer(unsafeTemp * 200);
     }
   } else {
